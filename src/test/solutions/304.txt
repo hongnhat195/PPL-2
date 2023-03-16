@@ -1,0 +1,3 @@
+Program([
+	FuncDecl(main, VoidType, [], None, BlockStmt([VarDecl(myPets, ArrayType([5, 6], StringType)), CallStmt(printInteger, IntegerLit(4)), VarDecl(x, IntegerType, IntegerLit(5))]))
+])
