@@ -1,4 +1,5 @@
 
-        main: function void () {
-              if (a>b) {a = b;}
-        }
+        a : boolean = true ;
+        b : boolean = !a && false || (false && true || true) ;  
+        c : boolean = !!b || false ;
+        

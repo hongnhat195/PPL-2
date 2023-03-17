@@ -86,8 +86,8 @@ exp1:
 exp2: exp2 AND exp3 | exp2 OR exp3 | exp3;
 exp3: exp3 ADD exp4 | exp3 SUB exp4 | exp4;
 exp4: exp4 MUL exp5 | exp4 DIV exp5 | exp4 MOD exp5 | exp5;
-exp5: NOT (exp0|exp6) |  exp6;
-exp6: SUB (exp0|exp6) |  exp7;
+exp5: NOT exp5 |  exp6;
+exp6: SUB exp6 |  exp7;
 exp7: ID LS listexp RS | exp8 ;
 exp8: 	FLOATLIT
 	| boolit

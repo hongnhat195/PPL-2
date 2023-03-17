@@ -389,13 +389,13 @@ class ASTGeneration(MT22Visitor):
         # exp5: NOT exp6 | exp6;
         if ctx.getChildCount() == 1:
             return self.visit(ctx.exp6())
-        return UnExpr(ctx.NOT(), self.visit(ctx.exp0() if ctx.exp0() else ctx.exp6()))
+        return UnExpr(ctx.NOT(), self.visit(ctx.exp5()))
 
     def visitExp6(self, ctx: MT22Parser.Exp6Context):
         # exp6: SUB exp7 | exp7;
         if ctx.getChildCount() == 1:
             return self.visit(ctx.exp7())
-        return UnExpr(ctx.SUB(), self.visit(ctx.exp0() if ctx.exp0() else ctx.exp7()))
+        return UnExpr(ctx.SUB(), self.visit(ctx.exp6()))
 
     def visitExp7(self, ctx: MT22Parser.Exp7Context):
         # exp7: ID LS listexp RS | exp8;
@@ -408,7 +408,7 @@ class ASTGeneration(MT22Visitor):
     def visitExp8(self, ctx: MT22Parser.Exp8Context):
         # exp8: 	FLOATLIT	| boolit| STRLIT| ID	| INT	| arr	| exp9	| funcall	;
         if ctx.FLOATLIT():
-            return FloatLit(float(ctx.FLOATLIT().getText()))
+            return FloatLit(float('0' + ctx.FLOATLIT().getText()))
         if ctx.boolit():
             return self.visit(ctx.boolit())
         if ctx.STRLIT():

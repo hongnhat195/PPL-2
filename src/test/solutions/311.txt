@@ -1,3 +1,4 @@
 Program([
-	FuncDecl(main, VoidType, [], None, BlockStmt([VarDecl(a1, IntegerType, BinExpr(+, Id(a), IntegerLit(1))), VarDecl(b2, IntegerType, IntegerLit(0)), AssignStmt(Id(a), IntegerLit(3))]))
+	VarDecl(value, ArrayType([2, 3], FloatType), ArrayLit([ArrayLit([FloatLit(1.2), UnExpr(-, FloatLit(40000000000.0)), BinExpr(/, BinExpr(*, FloatLit(1.02), IntegerLit(12)), IntegerLit(1))]), ArrayLit([Id(a), Id(b), FloatLit(7.0)])]))
+	VarDecl(S, ArrayType([0], StringType), ArrayLit([]))
 ])
