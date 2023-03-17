@@ -1,1 +1,6 @@
-delta: integer = 3;
+ main: function void () {
+                 a = readInteger();
+                //b = readFloat();
+                //c = readBoolean();
+                //d = readString();
+        }

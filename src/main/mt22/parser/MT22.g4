@@ -39,8 +39,8 @@ forsta: FOR LB lhs ASG exp0 COMMA exp1 COMMA exp0 RB stmt ;
 contista: CONTINUE SEMI;
 breaksta: BREAK SEMI;
 returnsta: RETURN exp0? SEMI;
-whilesta: WHILE LB exp0 RB blocksta ;
-dosta: DO blocksta WHILE LB exp0 RB  SEMI;
+whilesta: WHILE LB exp0 RB (blocksta | stmt) ;
+dosta: DO (blocksta | stmt) WHILE LB exp0 RB  SEMI;
 blocksta: LP body1 RP;
 body1: body1 stmt | stmt |  ;
 listval: listval COMMA ID  | ID ;
@@ -49,9 +49,9 @@ paramemter: INHERIT?  OUT?   ID COLO (autotype | arrtype) ;
 
 vardecl: (noninitvardecl | initvardecl ) SEMI  ;
 noninitvardecl: idlist COLO  (autotype | arrtype)  ;
-initvardecl: ID initvardeclrec exp0;
+initvardecl: ID initvardeclrec (exp0| specialfunc) ;
 initvardeclrec:
-	COMMA ID initvardeclrec exp0 COMMA
+	COMMA ID initvardeclrec (exp0| specialfunc) COMMA
 	| COLO (autotype | arrtype) ASG;
 idlist: ID COMMA idlist | ID;
 spefuncstmt: specialfunc SEMI;
@@ -60,14 +60,15 @@ function: ID COLO FUNC systemtype LB listparam? RB (INHERIT ID)? blocksta  ;
 
 /*---------------------------special func-----------------------------*/
 
-specialfunc: (readInt | printInt | readFloat | writeFloat |printBool | readString | printString | superfunc | predef ) ;
+specialfunc: (readBool | readInt | printInt | readFloat | writeFloat |printBool | readString | printString | superfunc | predef ) ;
 readInt: READINT LB  RB;
-printInt: PRINTINT LB (INT | ID)? RB;
+printInt: PRINTINT LB (INT | ID | exp0)? RB;
 readFloat: READF LB RB;
-writeFloat: WRITEF LB FLOATLIT  RB;
-printBool: PRINTBOOL LB (boolit| ID) RB;
+writeFloat: WRITEF LB (FLOATLIT| ID | exp0)  RB;
+printBool: PRINTBOOL LB (boolit| ID| exp0) RB;
+readBool: READBOOL LB RB;
 readString: READSTRING LB RB;
-printString: PRINTSTRING LB (STRLIT|ID) RB ;
+printString: PRINTSTRING LB (STRLIT| ID | exp0 ) RB ;
 superfunc: SUPER LB listexp RB;
 predef: PREDE RB LB;
 
@@ -85,12 +86,12 @@ exp1:
 exp2: exp2 AND exp3 | exp2 OR exp3 | exp3;
 exp3: exp3 ADD exp4 | exp3 SUB exp4 | exp4;
 exp4: exp4 MUL exp5 | exp4 DIV exp5 | exp4 MOD exp5 | exp5;
-exp5: NOT exp6 | exp6;
-exp6: SUB exp7 | exp7;
-exp7: ID LS listexp RS | exp8;
+exp5: NOT (exp0|exp6) |  exp6;
+exp6: SUB (exp0|exp6) |  exp7;
+exp7: ID LS listexp RS | exp8 ;
 exp8: 	FLOATLIT
 	| boolit
-	| STRLIT
+	| STRLIT       
 	| ID
 	| INT
 	| arr
@@ -103,7 +104,7 @@ funcall: ID LB listexp? RB;
 
 
 /*---------------------------type-----------------------------*/
-arrlit: LP listexp RP ;
+arrlit: LP listexp? RP ;
 arrtype: ARRAY LS intlitarr RS OF  autotype ;
 literals: INT | boolit | FLOATLIT | STRLIT ;
 arr: ID LS intlitarr RS ;
@@ -142,7 +143,7 @@ READINT: 'readInteger';
 PRINTINT: 'printInteger';
 READF: 'readFloat';
 WRITEF: 'writeFloat';
-READBOOl: 'readBoolean';
+READBOOL: 'readBoolean';
 PRINTBOOL: 'printBoolean';
 READSTRING: 'readString';
 PRINTSTRING: 'printString';

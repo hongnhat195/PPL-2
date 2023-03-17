@@ -54,7 +54,11 @@ class ASTGeneration(MT22Visitor):
     def visitInitvardecl(self, ctx: MT22Parser.InitvardeclContext):
         # initvardecl: ID initvardeclrec exp0;
         id = ctx.ID().getText()
-        expr = self.visit(ctx.exp0())
+        if ctx.exp0():
+            expr = self.visit(ctx.exp0())
+        else:
+            t = self.visit(ctx.specialfunc())
+            expr = FuncCall(t["name"], t["param"])
         res = {"name": [id], "type": None, "listexp": [expr]}
         self.res = res
         res = self.visit(ctx.initvardeclrec())
@@ -71,7 +75,11 @@ class ASTGeneration(MT22Visitor):
         res = self.res
         if ctx.initvardeclrec():
             name = ctx.ID().getText()
-            exp = self.visit(ctx.exp0())
+            if ctx.exp0():
+                exp = self.visit(ctx.exp0())
+            else:
+                t = self.visit(ctx.specialfunc())
+                exp = FuncCall(t["name"], t["param"])
             res["name"].append(name)
             res["listexp"].append(exp)
             self.res = res
@@ -82,7 +90,7 @@ class ASTGeneration(MT22Visitor):
             else:
                 typ = self.visit(ctx.arrtype())
             res["type"] = typ
-            self.res = res
+        self.res = res
         return res
 
     def visitStmt(self, ctx: MT22Parser.StmtContext):
@@ -112,7 +120,8 @@ class ASTGeneration(MT22Visitor):
         return self.visit(ctx.spefuncstmt())
 
     def visitSpefuncstmt(self, ctx:  MT22Parser.SpefuncstmtContext):
-        return self.visit(ctx.specialfunc())
+        t = self.visit(ctx.specialfunc())
+        return CallStmt(t["name"], t["param"])
 
     def visitSpecialfunc(self, ctx:  MT22Parser.SpecialfuncContext):
         # specialfunc: (readInt | printInt | readFloat | writeFloat |printBool | readString | printString | superfunc | predef ) ;
@@ -134,6 +143,8 @@ class ASTGeneration(MT22Visitor):
             return self.visit(ctx.superfunc())
         if ctx.predef():
             return self.visit(ctx.predef())
+        if ctx.readBool():
+            return self.visit(ctx.readBool())
 
     def visitCallstmt(self, ctx: MT22Parser.CallstmtContext):
         # callstmt: ID LB listexp? RB SEMI ;
@@ -150,12 +161,15 @@ class ASTGeneration(MT22Visitor):
             rhs = self.visit(ctx.exp0())
         elif ctx.funcall():
             rhs = self.visit(ctx.funcall())
+        else:
+            rhs = self.visit(ctx.specialfunc())
+            rhs = FuncCall(rhs["name"], rhs["param"])
         return AssignStmt(lhs, rhs)
 
     def visitLhs(self, ctx: MT22Parser.LhsContext):
         if ctx.ID():
             return Id(ctx.ID().getText())
-        return self.visit(ctx.epx7())
+        return self.visit(ctx.exp7())
 
     def visitIfsta(self, ctx: MT22Parser.IfstaContext):
         # ifsta:	IF LB exp0 RB stmt (ELSE stmt)?;
@@ -169,9 +183,9 @@ class ASTGeneration(MT22Visitor):
     def visitForsta(self, ctx: MT22Parser.ForstaContext):
         # forsta: FOR LB lhs ASG exp0 COMMA exp1 COMMA exp0 RB stmt ;
         lhs = self.visit(ctx.lhs())
-        rhs = self.visit(ctx.epx0(0))
+        rhs = self.visit(ctx.exp0(0))
         init = AssignStmt(lhs, rhs)
-        cond = self.visit(ctx.epx1())
+        cond = self.visit(ctx.exp1())
         upd = self.visit(ctx.exp0(1))
         stmt = self.visit(ctx.stmt())
         return ForStmt(init, cond, upd, stmt)
@@ -193,12 +207,15 @@ class ASTGeneration(MT22Visitor):
     def visitWhilesta(self, ctx: MT22Parser.WhilestaContext):
         # whilesta: WHILE LB exp0 RB blocksta ;
         expr = self.visit(ctx.exp0())
-        block = self.visit(ctx.blocksta())
+        block = self.visit(ctx.blocksta()) if ctx.blocksta(
+        ) else self.visit(ctx.stmt())
         return WhileStmt(expr, block)
 
     def visitDosta(self, ctx: MT22Parser.DostaContext):
         # dosta: DO blocksta WHILE LB exp0 RB  SEMI;
-        return DoWhileStmt(self.visit(ctx.blocksta()), self.visit(ctx.exp0()))
+        block = self.visit(ctx.blocksta()) if ctx.blocksta(
+        ) else self.visit(ctx.stmt())
+        return DoWhileStmt(self.visit(ctx.exp0()), block)
 
     def visitBlocksta(self, ctx: MT22Parser.BlockstaContext):
         # blocksta: LP body1 RP;
@@ -259,46 +276,61 @@ class ASTGeneration(MT22Visitor):
         return [ctx.ID().getText()] + self.visit(ctx.idlist())
 
     def visitReadInt(self, ctx: MT22Parser.ReadIntContext):
-        return CallStmt(ctx.READINT().getText(), [])
+        return {"name": ctx.READINT().getText(), "param": []}
 
     def visitPrintInt(self, ctx: MT22Parser.PrintIntContext):
         param = []
         if ctx.INT():
             param = [IntegerLit(int(ctx.INT().getText()))]
-        else:
+        elif ctx.ID():
             param = [Id(ctx.ID().getText())]
-        return CallStmt(ctx.PRINTINT().getText(), param)
+        elif ctx.exp0():
+            param = [self.visit(ctx.exp0())]
+
+        return {"name": ctx.PRINTINT().getText(), "param": param}
 
     def visitReadFloat(self, ctx: MT22Parser.ReadFloatContext):
-        return CallStmt(ctx.READF().getText(), [])
+        return {"name": ctx.READF().getText(), "param": []}
 
     def visitWriteFloat(self, ctx: MT22Parser.WriteFloatContext):
-        param = [FloatLit(float(ctx.FLOATLIT().getText()))]
-        return CallStmt(ctx.WRITEF().getText(), param)
+        if ctx.FLOATLIT():
+            param = [FloatLit(float(ctx.FLOATLIT().getText()))]
+        elif ctx.ID():
+            param = [Id(ctx.ID().getText())]
+        elif ctx.exp0():
+            param = [self.visit(ctx.exp0())]
+        return {"name": ctx.WRITEF().getText(), "param": param}
 
     def visitPrintBool(self, ctx: MT22Parser.PrintBoolContext):
         if ctx.boolit():
             param = [self.visit(ctx.boolit())]
-        else:
+        elif ctx.ID():
             param = [Id(ctx.ID().getText())]
-        return CallStmt(ctx.PRINTBOOL().getText(), param)
+        elif ctx.exp0():
+            param = [self.visit(ctx.exp0())]
+        return {"name": ctx.PRINTBOOL().getText(), "param": param}
 
     def visitReadString(self, ctx: MT22Parser.ReadStringContext):
-        return CallStmt(ctx.READSTRING().getText(), [])
+        return {"name": ctx.READSTRING().getText(), "param": []}
 
     def visitPrintString(self, ctx: MT22Parser.PrintStringContext):
         if ctx.STRLIT():
             param = [StringLit(ctx.STRLIT().getText())]
-        else:
+        elif ctx.ID():
             param = [Id(ctx.ID().getText())]
-        return CallStmt(ctx.PRINTSTRING().getText(), param)
+        elif ctx.exp0():
+            param = [self.visit(ctx.exp0())]
+        return {"name": ctx.PRINTSTRING().getText(), "param": param}
 
     def visitSuperfunc(self, ctx: MT22Parser.SuperfuncContext):
         listexp = self.visit(ctx.listexp())
-        return CallStmt(ctx.SUPER().getText(), listexp)
+        return {"name": ctx.SUPER().getText(), "param": listexp}
 
     def visitPredef(self, ctx: MT22Parser.PredefContext):
-        return CallStmt(ctx.PREDE().getText(), [])
+        return {"name": ctx.PREDE().getText(), "param": []}
+
+    def visitReadBool(self, ctx: MT22Parser.ReadBoolContext):
+        return {"name": ctx.READBOOL().getText(), "param": []}
 
     def visitListexp(self, ctx: MT22Parser.ListexpContext):
         # listexp:  listexp COMMA exp0 | exp0;
@@ -309,23 +341,23 @@ class ASTGeneration(MT22Visitor):
     def visitExp0(self, ctx: MT22Parser.Exp0Context):
         # exp0: exp1 CONCAT exp1| exp1;
         if ctx.getChildCount() != 1:
-            return BinExpr(ctx.CONCAT().getText(), self.visit(ctx.exp1(0)), self.visit(ctx.exp1(1)))
+            return BinExpr(ctx.CONCAT(), self.visit(ctx.exp1(0)), self.visit(ctx.exp1(1)))
         return self.visit(ctx.exp1(0))
 
     def visitExp1(self, ctx: MT22Parser.Exp1Context):
         # exp1:	exp2 EQUAL exp2	| exp2 NEQUAL exp2	| exp2 LTE exp2	| exp2 GTE exp2	| exp2 LT exp2	| exp2 GT exp2	| exp2;
         if ctx.EQUAL():
-            return BinExpr(ctx.EQUAL().getText(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
+            return BinExpr(ctx.EQUAL(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
         if ctx.NEQUAL():
-            return BinExpr(ctx.NEQUAL().getText(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
+            return BinExpr(ctx.NEQUAL(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
         if ctx.LTE():
-            return BinExpr(ctx.LTE().getText(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
+            return BinExpr(ctx.LTE(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
         if ctx.GTE():
-            return BinExpr(ctx.GTE().getText(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
+            return BinExpr(ctx.GTE(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
         if ctx.LT():
-            return BinExpr(ctx.LT().getText(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
+            return BinExpr(ctx.LT(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
         if ctx.GT():
-            return BinExpr(ctx.GT().getText(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
+            return BinExpr(ctx.GT(), self.visit(ctx.exp2(0)), self.visit(ctx.exp2(1)))
         return self.visit(ctx.exp2(0))
 
     def visitExp2(self, ctx: MT22Parser.Exp2Context):
@@ -338,32 +370,32 @@ class ASTGeneration(MT22Visitor):
     def visitExp3(self, ctx: MT22Parser.Exp3Context):
         # exp3: exp3 ADD exp4 | exp3 SUB exp4 | exp4;
         if ctx.ADD():
-            return BinExpr(ctx.ADD().getText(), self.visit(ctx.exp3()), self.visit(ctx.exp4()))
+            return BinExpr(ctx.ADD(), self.visit(ctx.exp3()), self.visit(ctx.exp4()))
         if ctx.SUB():
-            return BinExpr(ctx.SUB().getText(), self.visit(ctx.exp3()), self.visit(ctx.exp4()))
+            return BinExpr(ctx.SUB(), self.visit(ctx.exp3()), self.visit(ctx.exp4()))
         return self.visit(ctx.exp4())
 
     def visitExp4(self, ctx: MT22Parser.Exp4Context):
         # exp4: exp4 MUL exp5 | exp4 DIV exp5 | exp4 MOD exp5 | exp5;
         if ctx.MUL():
-            return BinExpr(ctx.MUL().getText(), self.visit(ctx.exp4()), self.visit(ctx.exp5()))
+            return BinExpr(ctx.MUL(), self.visit(ctx.exp4()), self.visit(ctx.exp5()))
         if ctx.DIV():
-            return BinExpr(ctx.DIV().getText(), self.visit(ctx.exp4()), self.visit(ctx.exp5()))
+            return BinExpr(ctx.DIV(), self.visit(ctx.exp4()), self.visit(ctx.exp5()))
         if ctx.MOD():
-            return BinExpr(ctx.MOD().getText(), self.visit(ctx.exp4()), self.visit(ctx.exp5()))
+            return BinExpr(ctx.MOD(), self.visit(ctx.exp4()), self.visit(ctx.exp5()))
         return self.visit(ctx.exp5())
 
     def visitExp5(self, ctx: MT22Parser.Exp5Context):
         # exp5: NOT exp6 | exp6;
         if ctx.getChildCount() == 1:
             return self.visit(ctx.exp6())
-        return UnExpr(ctx.NOT().getText(), self.visit(ctx.exp6()))
+        return UnExpr(ctx.NOT(), self.visit(ctx.exp0() if ctx.exp0() else ctx.exp6()))
 
     def visitExp6(self, ctx: MT22Parser.Exp6Context):
         # exp6: SUB exp7 | exp7;
         if ctx.getChildCount() == 1:
             return self.visit(ctx.exp7())
-        return UnExpr(ctx.SUB().getText(), self.visit(ctx.exp7()))
+        return UnExpr(ctx.SUB(), self.visit(ctx.exp0() if ctx.exp0() else ctx.exp7()))
 
     def visitExp7(self, ctx: MT22Parser.Exp7Context):
         # exp7: ID LS listexp RS | exp8;
@@ -376,7 +408,7 @@ class ASTGeneration(MT22Visitor):
     def visitExp8(self, ctx: MT22Parser.Exp8Context):
         # exp8: 	FLOATLIT	| boolit| STRLIT| ID	| INT	| arr	| exp9	| funcall	;
         if ctx.FLOATLIT():
-            return Floatlit(float(ctx.FLOATLIT().getText()))
+            return FloatLit(float(ctx.FLOATLIT().getText()))
         if ctx.boolit():
             return self.visit(ctx.boolit())
         if ctx.STRLIT():
@@ -388,7 +420,7 @@ class ASTGeneration(MT22Visitor):
         if ctx.arr():
             return self.visit(ctx.arr())
         if ctx.exp9():
-            return self.vist(ctx.exp9())
+            return self.visit(ctx.exp9())
         if ctx.arrlit():
             return self.visit(ctx.arrlit())
         return self.visit(ctx.funcall())
@@ -400,7 +432,7 @@ class ASTGeneration(MT22Visitor):
     def visitFuncall(self, ctx: MT22Parser.FuncallContext):
         # funcall: ID LB listexp? RB;
         listexp = []
-        if ctx.listexp:
+        if ctx.listexp():
             listexp = self.visit(ctx.listexp())
         name = ctx.ID().getText()
         return FuncCall(name, listexp)
@@ -417,8 +449,10 @@ class ASTGeneration(MT22Visitor):
         id = ctx.ID().getText()
         inlitarr = self.visit(ctx.intlitarr())
 
-    def visitArrlit(self, ctx: ArrlitContext):
-        listexp = self.visit(ctx.listexp())
+    def visitArrlit(self, ctx: MT22Parser.ArrlitContext):
+        # arrlit: LP listexp RP ;
+
+        listexp = self.visit(ctx.listexp()) if ctx.listexp() else []
         return ArrayLit(listexp)
 
     def visitIntlitarr(self, ctx: MT22Parser.IntlitarrContext):
@@ -458,5 +492,5 @@ class ASTGeneration(MT22Visitor):
 
     def visitBoolit(self, ctx: MT22Parser.BoolitContext):
         if ctx.TRUE():
-            return BooleanLit("True")
-        return Booleanlit("False")
+            return BooleanLit(True)
+        return BooleanLit(False)

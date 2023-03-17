@@ -169,6 +169,11 @@ class MT22Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by MT22Parser#readBool.
+    def visitReadBool(self, ctx:MT22Parser.ReadBoolContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by MT22Parser#readString.
     def visitReadString(self, ctx:MT22Parser.ReadStringContext):
         return self.visitChildren(ctx)
@@ -246,6 +251,11 @@ class MT22Visitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by MT22Parser#funcall.
     def visitFuncall(self, ctx:MT22Parser.FuncallContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by MT22Parser#arrlit.
+    def visitArrlit(self, ctx:MT22Parser.ArrlitContext):
         return self.visitChildren(ctx)
 
 

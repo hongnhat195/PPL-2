@@ -1,5 +1,2 @@
-main: function void () {
-            myPets : array[5, 6] of string ;
-            printInteger(4);
-            x: integer = 5;
-        }
+x, y, z: integer = 1, 2, 3;
+        a, b: float;

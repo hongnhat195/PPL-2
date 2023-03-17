@@ -1,1 +1,1 @@
-abc,<EOF>
+main,:,function,void,(,),{,a,=,readInteger,(,),;,},<EOF>

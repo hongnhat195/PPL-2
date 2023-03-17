@@ -316,7 +316,7 @@ class MT22Lexer(Lexer):
     PRINTINT = 23
     READF = 24
     WRITEF = 25
-    READBOOl = 26
+    READBOOL = 26
     PRINTBOOL = 27
     READSTRING = 28
     PRINTSTRING = 29
@@ -379,7 +379,7 @@ class MT22Lexer(Lexer):
             "AUTO", "BREAK", "BOOLEAN", "DO", "ELSE", "FALSE", "FLOAT", 
             "FOR", "IF", "INTEGER", "RETURN", "STRING", "TRUE", "WHILE", 
             "VOID", "OUT", "CONTINUE", "OF", "INHERIT", "ARRAY", "FUNC", 
-            "READINT", "PRINTINT", "READF", "WRITEF", "READBOOl", "PRINTBOOL", 
+            "READINT", "PRINTINT", "READF", "WRITEF", "READBOOL", "PRINTBOOL", 
             "READSTRING", "PRINTSTRING", "SUPER", "PREDE", "ADD", "SUB", 
             "MUL", "DIV", "MOD", "NOT", "AND", "OR", "EQUAL", "NEQUAL", 
             "LT", "LTE", "GT", "GTE", "CONCAT", "ASG", "LB", "RB", "LP", 
@@ -390,7 +390,7 @@ class MT22Lexer(Lexer):
     ruleNames = [ "AUTO", "BREAK", "BOOLEAN", "DO", "ELSE", "FALSE", "FLOAT", 
                   "FOR", "IF", "INTEGER", "RETURN", "STRING", "TRUE", "WHILE", 
                   "VOID", "OUT", "CONTINUE", "OF", "INHERIT", "ARRAY", "FUNC", 
-                  "READINT", "PRINTINT", "READF", "WRITEF", "READBOOl", 
+                  "READINT", "PRINTINT", "READF", "WRITEF", "READBOOL", 
                   "PRINTBOOL", "READSTRING", "PRINTSTRING", "SUPER", "PREDE", 
                   "ADD", "SUB", "MUL", "DIV", "MOD", "NOT", "AND", "OR", 
                   "EQUAL", "NEQUAL", "LT", "LTE", "GT", "GTE", "CONCAT", 

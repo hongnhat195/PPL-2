@@ -1,10 +1,2 @@
-main: function void () {
-                do {
-                    x, y, z: integer = 1, 2, 3;
-                    if (a == 10) continue;
-                    a = a - 1; 
-                    printInteger(a);
-                    z = a[x+5, y+5, z+5];
-                }
-                while(a > 0);
-            } 
+main: function string (out a : string) {
+        }
